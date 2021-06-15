@@ -21,7 +21,7 @@ const routes = require('./app/route')
 
 app.use('/api/poll',routes)
 
-const port = 3030
+const port = process.env.PORT
 app.listen(port,()=>{
     console.log("server running on port "+port)
 })
