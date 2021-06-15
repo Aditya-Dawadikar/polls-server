@@ -12,6 +12,8 @@ route.post('/deletepoll',controller.deletePoll)
 
 route.get('/mypolls/:id',controller.getMyPoll)
 
+route.get('/getpoll/:userid/:poll',controller.getPoll)
+
 route.post('/vote',controller.vote)
 
 module.exports = route

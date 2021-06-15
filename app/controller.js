@@ -4,14 +4,17 @@ exports.signup = (req,res)=>{
     let newUser = new PollUser({
         username:req.body.username,
         password:req.body.password,
-        polls:[]
+        polls:[],
     })
 
     newUser.save()
     .then(doc=>{
         res.status(200).json({
             message:"user saved successfully",
-            doc: doc
+            user: {
+                userid: doc._id,
+                username: doc.username
+            }
         })
     })
     .catch(err=>{
@@ -49,9 +52,11 @@ exports.login = (req,res)=>{
 
 exports.createPoll = async(req,res)=>{
     const newPoll = req.body.poll
-    let userPolls;
+    let oldPolls
+    let userPolls
     await PollUser.findOne({_id:req.body.id})
     .then((doc)=>{
+        oldPolls=doc.polls
         userPolls = doc.polls
         userPolls.push(newPoll)
     }).catch(err=>{
@@ -60,12 +65,14 @@ exports.createPoll = async(req,res)=>{
             error:err
         })
     })
-    await PollUser.findByIdAndUpdate({_id:req.body.id},{$set:{polls:userPolls}})
+    await PollUser.findByIdAndUpdate({_id:req.body.id},{$set:{polls:userPolls}},{new:true})
     .then(doc=>{
-        console.log(doc)
+        let length = doc.polls.length
+        let newPoll = doc.polls[length-1]
+
         res.status(200).json({
             message:"new poll created",
-            poll:doc._id
+            poll:newPoll
         })
     }).catch(err=>{
         console.log(err)
@@ -81,6 +88,30 @@ exports.getMyPoll = (req,res)=>{
         res.status(200).json({
             message:"found polls",
             polls:doc.polls
+        })
+    }).catch(err=>{
+        console.log(err)
+        res.status(500).json({
+            error:err
+        })
+    })
+}
+
+exports.getPoll = (req,res)=>{
+    console.log(req.params.poll)
+    PollUser.findById({_id:req.params.userid})
+    .then(doc=>{
+        let currPoll
+        console.log(doc.polls)
+        doc.polls.map(poll=>{
+            if(String(poll._id)===String(req.params.poll)){
+                currPoll = poll
+                return
+            }
+        })
+        res.status(200).json({
+            message:"found poll",
+            poll:currPoll
         })
     }).catch(err=>{
         console.log(err)
@@ -128,6 +159,7 @@ exports.vote = async(req,res)=>{
     let userPolls
     let requiredPoll
     let candidates
+    let voters
 
     await PollUser.findById({_id:req.body.userid})
     .then(doc=>{
@@ -144,16 +176,19 @@ exports.vote = async(req,res)=>{
                     }
                 })
                 if(flag==1){
+                    // voters = poll.voters
+                    poll.voters.push(req.body.voter)
                     return
                 }
             }
         })
     })
 
-    await PollUser.findByIdAndUpdate({_id:req.body.userid},{$set:{polls:userPolls}})
+    await PollUser.findByIdAndUpdate({_id:req.body.userid},{$set:{polls:userPolls}},{new:true})
     .then(doc=>{
         res.status(200).json({
-            message:"voted successfully"
+            message:"voted successfully",
+            doc:doc
         })
     }).catch(err=>{
         console.log(err)

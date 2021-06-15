@@ -8,8 +8,9 @@ const user = mongoose.Schema({
         options:[{
             name:String,
             count:Number
-        }]
-    }]
+        }],
+        voters:[mongoose.Types.ObjectId]
+    }],
 })
 
 module.exports = mongoose.model('pollUser',user)
